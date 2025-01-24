@@ -1,93 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Rastreamento de Âncora em Tempo Real</title>
-  <style>
-    canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    video {
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Anchor Drawing Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        #canvas-container {
+            position: relative;
+            display: inline-block;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+        canvas {
+            display: block;
+        }
+        .controls {
+            margin-top: 10px;
+        }
+        label {
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
-  <input type="file" accept="image/*" id="anchor-input" />
-  <video id="video" autoplay></video>
-  <canvas id="canvas"></canvas>
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const anchorInput = document.getElementById('anchor-input');
+    <h1>Image Anchor Drawing Tool</h1>
 
-    let anchorImage = null;
-    let anchorPattern = null;
-    let scaleFactor = 1;
+    <div>
+        <h2>Step 1: Select Anchor Image</h2>
+        <input type="file" id="anchor-upload" accept="image/*">
+    </div>
 
-    // Configura a câmera traseira
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(stream => {
-        video.srcObject = stream;
-        video.addEventListener('loadedmetadata', () => {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+    <div>
+        <h2>Step 2: Select Drawing Image</h2>
+        <input type="file" id="drawing-upload" accept="image/*">
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="main-canvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <h2>Adjust Drawing Image</h2>
+        <label for="size-slider">Size:</label>
+        <input type="range" id="size-slider" min="10" max="200" value="100">
+
+        <label for="opacity-slider">Opacity:</label>
+        <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="1">
+    </div>
+
+    <script>
+        const anchorUpload = document.getElementById('anchor-upload');
+        const drawingUpload = document.getElementById('drawing-upload');
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+
+        const sizeSlider = document.getElementById('size-slider');
+        const opacitySlider = document.getElementById('opacity-slider');
+
+        let anchorImage = new Image();
+        let drawingImage = new Image();
+        let drawingSize = 100;
+        let drawingOpacity = 1;
+
+        // Update canvas dimensions to match anchor image
+        function updateCanvas() {
+            canvas.width = anchorImage.width;
+            canvas.height = anchorImage.height;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(anchorImage, 0, 0);
+
+            if (drawingImage.src) {
+                ctx.globalAlpha = drawingOpacity;
+                const drawingWidth = (drawingSize / 100) * anchorImage.width;
+                const drawingHeight = (drawingImage.height / drawingImage.width) * drawingWidth;
+                ctx.drawImage(drawingImage, (canvas.width - drawingWidth) / 2, (canvas.height - drawingHeight) / 2, drawingWidth, drawingHeight);
+                ctx.globalAlpha = 1; // Reset opacity
+            }
+        }
+
+        // Load anchor image
+        anchorUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    anchorImage.onload = updateCanvas;
+                    anchorImage.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
         });
-      })
-      .catch(err => console.error('Erro ao acessar a câmera:', err));
 
-    // Carrega a imagem da âncora e seleciona a área desejada
-    anchorInput.addEventListener('change', event => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
+        // Load drawing image
+        drawingUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    drawingImage.onload = updateCanvas;
+                    drawingImage.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
-      reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-          anchorImage = img;
-          anchorPattern = ctx.createPattern(anchorImage, 'no-repeat');
-          // Aqui você pode adicionar a lógica de corte (usando uma segunda canvas para seleção, por exemplo)
-          alert('Âncora carregada! Agora ela será rastreada ao vivo.');
-        };
-        img.src = e.target.result;
-      };
+        // Adjust size
+        sizeSlider.addEventListener('input', (e) => {
+            drawingSize = e.target.value;
+            updateCanvas();
+        });
 
-      reader.readAsDataURL(file);
-    });
-
-    // Função principal para rastrear a âncora e projetar o desenho
-    function trackAndProject() {
-      if (!anchorImage) return requestAnimationFrame(trackAndProject);
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // TODO: Implementar o rastreamento da âncora em tempo real aqui
-      // Aqui você pode usar bibliotecas como OpenCV.js para identificar a posição da âncora
-      // Por enquanto, faremos apenas uma simulação de projeção
-
-      const x = canvas.width / 2 - anchorImage.width / 4;
-      const y = canvas.height / 2 - anchorImage.height / 4;
-      const width = anchorImage.width * scaleFactor;
-      const height = anchorImage.height * scaleFactor;
-
-      ctx.drawImage(anchorImage, x, y, width, height);
-
-      requestAnimationFrame(trackAndProject);
-    }
-
-    trackAndProject();
-
-    // Permite ajustar o tamanho da projeção
-    document.addEventListener('keydown', event => {
-      if (event.key === '+') scaleFactor += 0.1;
-      if (event.key === '-') scaleFactor -= 0.1;
-    });
-  </script>
+        // Adjust opacity
+        opacitySlider.addEventListener('input', (e) => {
+            drawingOpacity = e.target.value;
+            updateCanvas();
+        });
+    </script>
 </body>
 </html>
