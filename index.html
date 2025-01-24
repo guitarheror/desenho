@@ -3,19 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Desenho com Câmera Traseira</title>
+  <title>Projeção com Âncora</title>
   <style>
     body { margin: 0; display: flex; flex-direction: column; align-items: center; }
     video, canvas { position: absolute; top: 0; left: 0; }
-    #controls { position: fixed; bottom: 20px; background: rgba(255, 255, 255, 0.8); padding: 10px; }
+    #controls { position: fixed; bottom: 20px; background: rgba(255, 255, 255, 0.8); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
   </style>
 </head>
 <body>
   <video autoplay playsinline id="camera"></video>
   <canvas id="overlay"></canvas>
   <div id="controls">
-    <input type="file" id="imageUpload">
-    <label>Transparência:</label>
+    <input type="file" id="anchorUpload" accept="image/*">
+    <label>Carregue seu desenho como referência (âncora)</label>
+    <input type="file" id="imageUpload" accept="image/*">
+    <label>Carregue o desenho que será projetado</label>
+    <label>Tamanho do desenho:</label>
+    <input type="range" id="scale" min="0.5" max="2" step="0.1" value="1">
+    <label>Transparência do desenho:</label>
     <input type="range" id="opacity" min="0" max="1" step="0.1" value="0.5">
   </div>
 
@@ -23,9 +28,13 @@
     const video = document.getElementById('camera');
     const canvas = document.getElementById('overlay');
     const ctx = canvas.getContext('2d');
+    const anchorUpload = document.getElementById('anchorUpload');
     const imageUpload = document.getElementById('imageUpload');
     const opacityControl = document.getElementById('opacity');
+    const scaleControl = document.getElementById('scale');
+    let anchorImage = null;
     let overlayImage = null;
+    let anchorPosition = { x: 0, y: 0, width: 0, height: 0 };
 
     // Acessar a câmera traseira
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
@@ -42,7 +51,23 @@
       canvas.height = video.videoHeight;
     });
 
-    // Carregar imagem
+    // Carregar âncora
+    anchorUpload.addEventListener('change', event => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        anchorImage = new Image();
+        anchorImage.src = reader.result;
+        anchorImage.onload = () => {
+          // Detectar posição e tamanho da âncora (pode ser mais avançado usando bibliotecas como OpenCV.js)
+          anchorPosition = { x: 50, y: 50, width: 200, height: 200 }; // Simulação
+          drawOverlay();
+        };
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Carregar imagem para projeção
     imageUpload.addEventListener('change', event => {
       const file = event.target.files[0];
       const reader = new FileReader();
@@ -56,22 +81,45 @@
 
     // Desenhar a sobreposição
     function drawOverlay() {
-      if (!overlayImage) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.globalAlpha = opacityControl.value; // Transparência
-      ctx.drawImage(overlayImage, 0, 0, canvas.width, canvas.height);
+
+      // Desenhar vídeo ao fundo
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Desenhar âncora
+      if (anchorImage) {
+        ctx.globalAlpha = 1;
+        ctx.drawImage(
+          anchorImage,
+          anchorPosition.x,
+          anchorPosition.y,
+          anchorPosition.width,
+          anchorPosition.height
+        );
+      }
+
+      // Desenhar sobreposição
+      if (overlayImage) {
+        const scale = parseFloat(scaleControl.value);
+        const width = anchorPosition.width * scale;
+        const height = anchorPosition.height * scale;
+        const x = anchorPosition.x + (anchorPosition.width - width) / 2;
+        const y = anchorPosition.y + (anchorPosition.height - height) / 2;
+
+        ctx.globalAlpha = parseFloat(opacityControl.value);
+        ctx.drawImage(overlayImage, x, y, width, height);
+      }
     }
 
-    // Atualizar transparência em tempo real
+    // Atualizar transparência e escala em tempo real
     opacityControl.addEventListener('input', drawOverlay);
+    scaleControl.addEventListener('input', drawOverlay);
 
     // Atualizar canvas continuamente
     video.addEventListener('play', () => {
       function draw() {
         if (video.paused || video.ended) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Vídeo ao fundo
-        drawOverlay(); // Desenho sobreposto
+        drawOverlay();
         requestAnimationFrame(draw);
       }
       draw();
