@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Desenho com Câmera</title>
+  <style>
+    body { margin: 0; display: flex; flex-direction: column; align-items: center; }
+    video, canvas { position: absolute; top: 0; left: 0; }
+    #controls { position: fixed; bottom: 20px; background: rgba(255, 255, 255, 0.8); padding: 10px; }
+  </style>
+</head>
+<body>
+  <video autoplay playsinline id="camera"></video>
+  <canvas id="overlay"></canvas>
+  <div id="controls">
+    <input type="file" id="imageUpload">
+    <label>Transparência:</label>
+    <input type="range" id="opacity" min="0" max="1" step="0.1" value="0.5">
+  </div>
+
+  <script>
+    const video = document.getElementById('camera');
+    const canvas = document.getElementById('overlay');
+    const ctx = canvas.getContext('2d');
+    const imageUpload = document.getElementById('imageUpload');
+    const opacityControl = document.getElementById('opacity');
+    let overlayImage = null;
+
+    // Acessar a câmera
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      video.srcObject = stream;
+    });
+
+    // Ajustar canvas ao tamanho do vídeo
+    video.addEventListener('loadedmetadata', () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    });
+
+    // Carregar imagem
+    imageUpload.addEventListener('change', event => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        overlayImage = new Image();
+        overlayImage.src = reader.result;
+        overlayImage.onload = drawOverlay;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Desenhar a sobreposição
+    function drawOverlay() {
+      if (!overlayImage) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = opacityControl.value; // Transparência
+      ctx.drawImage(overlayImage, 0, 0, canvas.width, canvas.height);
+    }
+
+    // Atualizar transparência em tempo real
+    opacityControl.addEventListener('input', drawOverlay);
+
+    // Atualizar canvas continuamente
+    video.addEventListener('play', () => {
+      function draw() {
+        if (video.paused || video.ended) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Vídeo ao fundo
+        drawOverlay(); // Desenho sobreposto
+        requestAnimationFrame(draw);
+      }
+      draw();
+    });
+  </script>
+</body>
+</html>
