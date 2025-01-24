@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Desenho com Câmera</title>
+  <title>Desenho com Câmera Traseira</title>
   <style>
     body { margin: 0; display: flex; flex-direction: column; align-items: center; }
     video, canvas { position: absolute; top: 0; left: 0; }
@@ -27,10 +27,14 @@
     const opacityControl = document.getElementById('opacity');
     let overlayImage = null;
 
-    // Acessar a câmera
-    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-      video.srcObject = stream;
-    });
+    // Acessar a câmera traseira
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error("Erro ao acessar a câmera traseira:", err);
+      });
 
     // Ajustar canvas ao tamanho do vídeo
     video.addEventListener('loadedmetadata', () => {
