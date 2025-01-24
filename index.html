@@ -1,128 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Projeção com Âncora</title>
+  <title>Rastreamento de Âncora em Tempo Real</title>
   <style>
-    body { margin: 0; display: flex; flex-direction: column; align-items: center; }
-    video, canvas { position: absolute; top: 0; left: 0; }
-    #controls { position: fixed; bottom: 20px; background: rgba(255, 255, 255, 0.8); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    video {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
   </style>
 </head>
 <body>
-  <video autoplay playsinline id="camera"></video>
-  <canvas id="overlay"></canvas>
-  <div id="controls">
-    <input type="file" id="anchorUpload" accept="image/*">
-    <label>Carregue seu desenho como referência (âncora)</label>
-    <input type="file" id="imageUpload" accept="image/*">
-    <label>Carregue o desenho que será projetado</label>
-    <label>Tamanho do desenho:</label>
-    <input type="range" id="scale" min="0.5" max="2" step="0.1" value="1">
-    <label>Transparência do desenho:</label>
-    <input type="range" id="opacity" min="0" max="1" step="0.1" value="0.5">
-  </div>
-
+  <input type="file" accept="image/*" id="anchor-input" />
+  <video id="video" autoplay></video>
+  <canvas id="canvas"></canvas>
   <script>
-    const video = document.getElementById('camera');
-    const canvas = document.getElementById('overlay');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const anchorUpload = document.getElementById('anchorUpload');
-    const imageUpload = document.getElementById('imageUpload');
-    const opacityControl = document.getElementById('opacity');
-    const scaleControl = document.getElementById('scale');
-    let anchorImage = null;
-    let overlayImage = null;
-    let anchorPosition = { x: 0, y: 0, width: 0, height: 0 };
+    const anchorInput = document.getElementById('anchor-input');
 
-    // Acessar a câmera traseira
+    let anchorImage = null;
+    let anchorPattern = null;
+    let scaleFactor = 1;
+
+    // Configura a câmera traseira
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(stream => {
         video.srcObject = stream;
+        video.addEventListener('loadedmetadata', () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        });
       })
-      .catch(err => {
-        console.error("Erro ao acessar a câmera traseira:", err);
-      });
+      .catch(err => console.error('Erro ao acessar a câmera:', err));
 
-    // Ajustar canvas ao tamanho do vídeo
-    video.addEventListener('loadedmetadata', () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-    });
-
-    // Carregar âncora
-    anchorUpload.addEventListener('change', event => {
+    // Carrega a imagem da âncora e seleciona a área desejada
+    anchorInput.addEventListener('change', event => {
       const file = event.target.files[0];
+      if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
-        anchorImage = new Image();
-        anchorImage.src = reader.result;
-        anchorImage.onload = () => {
-          // Detectar posição e tamanho da âncora (pode ser mais avançado usando bibliotecas como OpenCV.js)
-          anchorPosition = { x: 50, y: 50, width: 200, height: 200 }; // Simulação
-          drawOverlay();
+
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          anchorImage = img;
+          anchorPattern = ctx.createPattern(anchorImage, 'no-repeat');
+          // Aqui você pode adicionar a lógica de corte (usando uma segunda canvas para seleção, por exemplo)
+          alert('Âncora carregada! Agora ela será rastreada ao vivo.');
         };
+        img.src = e.target.result;
       };
+
       reader.readAsDataURL(file);
     });
 
-    // Carregar imagem para projeção
-    imageUpload.addEventListener('change', event => {
-      const file = event.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        overlayImage = new Image();
-        overlayImage.src = reader.result;
-        overlayImage.onload = drawOverlay;
-      };
-      reader.readAsDataURL(file);
-    });
+    // Função principal para rastrear a âncora e projetar o desenho
+    function trackAndProject() {
+      if (!anchorImage) return requestAnimationFrame(trackAndProject);
 
-    // Desenhar a sobreposição
-    function drawOverlay() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Desenhar vídeo ao fundo
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Desenhar âncora
-      if (anchorImage) {
-        ctx.globalAlpha = 1;
-        ctx.drawImage(
-          anchorImage,
-          anchorPosition.x,
-          anchorPosition.y,
-          anchorPosition.width,
-          anchorPosition.height
-        );
-      }
+      // TODO: Implementar o rastreamento da âncora em tempo real aqui
+      // Aqui você pode usar bibliotecas como OpenCV.js para identificar a posição da âncora
+      // Por enquanto, faremos apenas uma simulação de projeção
 
-      // Desenhar sobreposição
-      if (overlayImage) {
-        const scale = parseFloat(scaleControl.value);
-        const width = anchorPosition.width * scale;
-        const height = anchorPosition.height * scale;
-        const x = anchorPosition.x + (anchorPosition.width - width) / 2;
-        const y = anchorPosition.y + (anchorPosition.height - height) / 2;
+      const x = canvas.width / 2 - anchorImage.width / 4;
+      const y = canvas.height / 2 - anchorImage.height / 4;
+      const width = anchorImage.width * scaleFactor;
+      const height = anchorImage.height * scaleFactor;
 
-        ctx.globalAlpha = parseFloat(opacityControl.value);
-        ctx.drawImage(overlayImage, x, y, width, height);
-      }
+      ctx.drawImage(anchorImage, x, y, width, height);
+
+      requestAnimationFrame(trackAndProject);
     }
 
-    // Atualizar transparência e escala em tempo real
-    opacityControl.addEventListener('input', drawOverlay);
-    scaleControl.addEventListener('input', drawOverlay);
+    trackAndProject();
 
-    // Atualizar canvas continuamente
-    video.addEventListener('play', () => {
-      function draw() {
-        if (video.paused || video.ended) return;
-        drawOverlay();
-        requestAnimationFrame(draw);
-      }
-      draw();
+    // Permite ajustar o tamanho da projeção
+    document.addEventListener('keydown', event => {
+      if (event.key === '+') scaleFactor += 0.1;
+      if (event.key === '-') scaleFactor -= 0.1;
     });
   </script>
 </body>
