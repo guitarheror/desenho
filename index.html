@@ -1,125 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Anchor Drawing Tool</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            text-align: center;
-        }
-        #canvas-container {
-            position: relative;
-            display: inline-block;
-            border: 1px solid #ccc;
-            margin-top: 20px;
-        }
-        canvas {
-            display: block;
-        }
-        .controls {
-            margin-top: 10px;
-        }
-        label {
-            margin-right: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Countdown Clock</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-image: url('image.png'); /* Make sure to use the actual path to the image */
+      background-size: cover;
+      background-position: center;
+      font-family: monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: red;
+    }
+
+    .clock {
+      display: flex;
+      gap: 10px;
+      font-size: 3rem;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .segment {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .label {
+      font-size: 0.8rem;
+      color: orange;
+    }
+  </style>
 </head>
 <body>
-    <h1>Image Anchor Drawing Tool</h1>
 
-    <div>
-        <h2>Step 1: Select Anchor Image</h2>
-        <input type="file" id="anchor-upload" accept="image/*">
+  <div class="clock">
+    <div class="segment">
+      <div id="years">06</div>
+      <div class="label">YRS</div>
     </div>
-
-    <div>
-        <h2>Step 2: Select Drawing Image</h2>
-        <input type="file" id="drawing-upload" accept="image/*">
+    <div class="segment">
+      <div id="days">041</div>
+      <div class="label">DAYS</div>
     </div>
-
-    <div id="canvas-container">
-        <canvas id="main-canvas"></canvas>
+    <div class="segment">
+      <div id="hours">15</div>
+      <div class="label">HRS</div>
     </div>
-
-    <div class="controls">
-        <h2>Adjust Drawing Image</h2>
-        <label for="size-slider">Size:</label>
-        <input type="range" id="size-slider" min="10" max="200" value="100">
-
-        <label for="opacity-slider">Opacity:</label>
-        <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="1">
+    <div class="segment">
+      <div id="minutes">43</div>
+      <div class="label">MIN</div>
     </div>
+    <div class="segment">
+      <div id="seconds">42</div>
+      <div class="label">SEC</div>
+    </div>
+  </div>
 
-    <script>
-        const anchorUpload = document.getElementById('anchor-upload');
-        const drawingUpload = document.getElementById('drawing-upload');
-        const canvas = document.getElementById('main-canvas');
-        const ctx = canvas.getContext('2d');
+  <script>
+    // Function to update the countdown
+    function updateCountdown(targetDate) {
+      const now = new Date();
+      const distance = targetDate - now;
 
-        const sizeSlider = document.getElementById('size-slider');
-        const opacitySlider = document.getElementById('opacity-slider');
+      const years = Math.floor(distance / (1000 * 60 * 60 * 24 * 365));
+      const days = Math.floor((distance % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        let anchorImage = new Image();
-        let drawingImage = new Image();
-        let drawingSize = 100;
-        let drawingOpacity = 1;
+      document.getElementById('years').textContent = String(years).padStart(2, '0');
+      document.getElementById('days').textContent = String(days).padStart(3, '0');
+      document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+      document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+    }
 
-        // Update canvas dimensions to match anchor image
-        function updateCanvas() {
-            canvas.width = anchorImage.width;
-            canvas.height = anchorImage.height;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(anchorImage, 0, 0);
+    // Set the target date
+    const targetDate = new Date("2031-05-22T00:00:00");
+    setInterval(() => updateCountdown(targetDate), 1000);
+  </script>
 
-            if (drawingImage.src) {
-                ctx.globalAlpha = drawingOpacity;
-                const drawingWidth = (drawingSize / 100) * anchorImage.width;
-                const drawingHeight = (drawingImage.height / drawingImage.width) * drawingWidth;
-                ctx.drawImage(drawingImage, (canvas.width - drawingWidth) / 2, (canvas.height - drawingHeight) / 2, drawingWidth, drawingHeight);
-                ctx.globalAlpha = 1; // Reset opacity
-            }
-        }
-
-        // Load anchor image
-        anchorUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    anchorImage.onload = updateCanvas;
-                    anchorImage.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Load drawing image
-        drawingUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    drawingImage.onload = updateCanvas;
-                    drawingImage.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Adjust size
-        sizeSlider.addEventListener('input', (e) => {
-            drawingSize = e.target.value;
-            updateCanvas();
-        });
-
-        // Adjust opacity
-        opacitySlider.addEventListener('input', (e) => {
-            drawingOpacity = e.target.value;
-            updateCanvas();
-        });
-    </script>
 </body>
 </html>
