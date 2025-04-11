@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Gravação do Climate Clock</title>
+  <title>Gravação HD do Climate Clock</title>
   <style>
     body {
       margin: 0;
@@ -19,6 +19,8 @@
     #clock-container {
       position: relative;
       margin: 20px;
+      transform: scale(1.5); /* Aumenta o tamanho para melhor qualidade */
+      transform-origin: top center;
     }
     
     .controls {
@@ -34,10 +36,12 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 16px;
     }
     
     #status {
-      margin-top: 10px;
+      margin-top: 20px;
+      font-size: 14px;
     }
     
     .blue-cover {
@@ -50,7 +54,6 @@
       z-index: 10;
     }
   </style>
-  <!-- Carrega html2canvas diretamente no head -->
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 <body>
@@ -60,11 +63,11 @@
   </div>
   
   <div class="controls">
-    <button id="startBtn">Iniciar Gravação</button>
+    <button id="startBtn">Iniciar Gravação HD</button>
     <button id="stopBtn" disabled>Parar Gravação</button>
   </div>
   
-  <div id="status">Pronto para gravar</div>
+  <div id="status">Aguardando início da gravação...</div>
 
   <script src="https://climateclock.world/widget-v2.js" async></script>
   
@@ -78,55 +81,58 @@
     let ctx;
     let animationId;
 
-    // Configura o canvas para captura
+    // Configuração do canvas em alta qualidade
     function setupCanvas() {
       const container = document.getElementById('clock-container');
       canvas = document.createElement('canvas');
-      canvas.width = container.offsetWidth;
-      canvas.height = container.offsetHeight;
+      
+      // Aumenta a resolução
+      const scale = 2; // Fator de escala para qualidade HD
+      canvas.width = container.offsetWidth * scale;
+      canvas.height = container.offsetHeight * scale;
+      
       ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
     }
 
-    // Captura o frame atual
+    // Captura em alta qualidade com configurações otimizadas
     function captureFrame() {
-      // Verifica se html2canvas está disponível
-      if (typeof html2canvas !== 'undefined') {
-        const container = document.getElementById('clock-container');
-        html2canvas(container).then(newCanvas => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(newCanvas, 0, 0, canvas.width, canvas.height);
-        });
-      }
+      const container = document.getElementById('clock-container');
+      
+      html2canvas(container, {
+        scale: 2, // Renderiza em dobro da resolução
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#001',
+        removeContainer: true,
+        cacheBust: true,
+        foreignObjectRendering: false
+      }).then(newCanvas => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(newCanvas, 0, 0, container.offsetWidth, container.offsetHeight);
+      });
+      
       animationId = requestAnimationFrame(captureFrame);
     }
 
-    // Inicia a gravação
     async function startRecording() {
       try {
         if (!canvas) setupCanvas();
         
-        statusEl.textContent = "Preparando gravação...";
+        statusEl.textContent = "Preparando gravação HD...";
         
-        // Espera o html2canvas carregar se necessário
-        if (typeof html2canvas === 'undefined') {
-          statusEl.textContent = "Carregando biblioteca...";
-          await new Promise(resolve => {
-            const script = document.createElement('script');
-            script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
-            script.onload = resolve;
-            document.head.appendChild(script);
-          });
-        }
+        // Configuração do MediaRecorder para melhor qualidade
+        const stream = canvas.captureStream(25); // 25 FPS
+        const options = {
+          mimeType: 'video/webm;codecs=vp9',
+          videoBitsPerSecond: 2500000 // 2.5 Mbps para qualidade HD
+        };
         
-        const stream = canvas.captureStream(15); // 15 FPS (reduzido para performance)
-        mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'video/webm'
-        });
+        mediaRecorder = new MediaRecorder(stream, options);
 
         mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            recordedChunks.push(e.data);
-          }
+          if (e.data.size > 0) recordedChunks.push(e.data);
         };
 
         mediaRecorder.onstop = () => {
@@ -134,11 +140,12 @@
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `climate-clock-${new Date().toISOString()}.webm`;
+          a.download = `climate-clock-hd-${new Date().getTime()}.webm`;
           a.click();
+          
           recordedChunks = [];
           cancelAnimationFrame(animationId);
-          statusEl.textContent = "Gravação salva!";
+          statusEl.textContent = "Gravação HD salva com sucesso!";
         };
 
         recordedChunks = [];
@@ -147,14 +154,15 @@
         
         startBtn.disabled = true;
         stopBtn.disabled = false;
-        statusEl.textContent = "Gravando...";
+        statusEl.textContent = "Gravando em alta qualidade...";
+        
       } catch (error) {
         console.error("Erro:", error);
         statusEl.textContent = "Erro: " + error.message;
+        startBtn.disabled = false;
       }
     }
 
-    // Para a gravação
     function stopRecording() {
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
