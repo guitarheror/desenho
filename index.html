@@ -1,93 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Countdown Clock</title>
+  <title>Gravação do Climate Clock</title>
   <style>
     body {
       margin: 0;
-      padding: 0;
-      background-image: url('image.png'); /* Make sure to use the actual path to the image */
-      background-size: cover;
-      background-position: center;
-      font-family: monospace;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      color: red;
-    }
-
-    .clock {
-      display: flex;
-      gap: 10px;
-      font-size: 3rem;
-      background-color: rgba(0, 0, 0, 0.6);
-      padding: 20px;
-      border-radius: 10px;
-    }
-
-    .segment {
+      background-color: #001;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
     }
-
-    .label {
-      font-size: 0.8rem;
-      color: orange;
+    
+    #clock-container {
+      position: relative;
+      margin: 20px;
+    }
+    
+    .controls {
+      margin: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    button {
+      padding: 10px 20px;
+      background-color: #ff0000;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    #status {
+      margin-top: 10px;
+    }
+    
+    .blue-cover {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 30px;
+      background-color: #000;
+      z-index: 10;
     }
   </style>
+  <!-- Carrega html2canvas diretamente no head -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 <body>
-
-  <div class="clock">
-    <div class="segment">
-      <div id="years">06</div>
-      <div class="label">YRS</div>
-    </div>
-    <div class="segment">
-      <div id="days">041</div>
-      <div class="label">DAYS</div>
-    </div>
-    <div class="segment">
-      <div id="hours">15</div>
-      <div class="label">HRS</div>
-    </div>
-    <div class="segment">
-      <div id="minutes">43</div>
-      <div class="label">MIN</div>
-    </div>
-    <div class="segment">
-      <div id="seconds">42</div>
-      <div class="label">SEC</div>
-    </div>
+  <div id="clock-container">
+    <climate-clock />
+    <div class="blue-cover"></div>
   </div>
+  
+  <div class="controls">
+    <button id="startBtn">Iniciar Gravação</button>
+    <button id="stopBtn" disabled>Parar Gravação</button>
+  </div>
+  
+  <div id="status">Pronto para gravar</div>
 
+  <script src="https://climateclock.world/widget-v2.js" async></script>
+  
   <script>
-    // Function to update the countdown
-    function updateCountdown(targetDate) {
-      const now = new Date();
-      const distance = targetDate - now;
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusEl = document.getElementById('status');
+    let mediaRecorder;
+    let recordedChunks = [];
+    let canvas;
+    let ctx;
+    let animationId;
 
-      const years = Math.floor(distance / (1000 * 60 * 60 * 24 * 365));
-      const days = Math.floor((distance % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-      document.getElementById('years').textContent = String(years).padStart(2, '0');
-      document.getElementById('days').textContent = String(days).padStart(3, '0');
-      document.getElementById('hours').textContent = String(hours).padStart(2, '0');
-      document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
-      document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+    // Configura o canvas para captura
+    function setupCanvas() {
+      const container = document.getElementById('clock-container');
+      canvas = document.createElement('canvas');
+      canvas.width = container.offsetWidth;
+      canvas.height = container.offsetHeight;
+      ctx = canvas.getContext('2d');
     }
 
-    // Set the target date
-    const targetDate = new Date("2031-05-22T00:00:00");
-    setInterval(() => updateCountdown(targetDate), 1000);
-  </script>
+    // Captura o frame atual
+    function captureFrame() {
+      // Verifica se html2canvas está disponível
+      if (typeof html2canvas !== 'undefined') {
+        const container = document.getElementById('clock-container');
+        html2canvas(container).then(newCanvas => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(newCanvas, 0, 0, canvas.width, canvas.height);
+        });
+      }
+      animationId = requestAnimationFrame(captureFrame);
+    }
 
+    // Inicia a gravação
+    async function startRecording() {
+      try {
+        if (!canvas) setupCanvas();
+        
+        statusEl.textContent = "Preparando gravação...";
+        
+        // Espera o html2canvas carregar se necessário
+        if (typeof html2canvas === 'undefined') {
+          statusEl.textContent = "Carregando biblioteca...";
+          await new Promise(resolve => {
+            const script = document.createElement('script');
+            script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+            script.onload = resolve;
+            document.head.appendChild(script);
+          });
+        }
+        
+        const stream = canvas.captureStream(15); // 15 FPS (reduzido para performance)
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm'
+        });
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            recordedChunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `climate-clock-${new Date().toISOString()}.webm`;
+          a.click();
+          recordedChunks = [];
+          cancelAnimationFrame(animationId);
+          statusEl.textContent = "Gravação salva!";
+        };
+
+        recordedChunks = [];
+        mediaRecorder.start(100); // Coleta dados a cada 100ms
+        captureFrame();
+        
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        statusEl.textContent = "Gravando...";
+      } catch (error) {
+        console.error("Erro:", error);
+        statusEl.textContent = "Erro: " + error.message;
+      }
+    }
+
+    // Para a gravação
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    }
+
+    startBtn.addEventListener('click', startRecording);
+    stopBtn.addEventListener('click', stopRecording);
+  </script>
 </body>
 </html>
