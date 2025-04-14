@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Climate Countdown iPhone Style</title>
+  <title>Climate Countdown Timer</title>
   <style>
     @font-face {
       font-family: 'Digital-7';
@@ -24,19 +24,14 @@
     }
 
     .iphone-horizontal {
-      width: 800px;
-      height: 400px;
+      width: 500px;
+      height: 250px;
       background: #000;
-      border-radius: 60px;
-      border: 2px solid #333; /* Borda mais fina e escura */
+      border-radius: 40px;
+      border: 1.5px solid #333;
       position: relative;
-      box-shadow: 0 0 40px rgba(255, 0, 0, 0.2);
       overflow: hidden;
     }
-
-    /* Removido o botão lateral */
-    
-    /* Removido o notch da câmera */
 
     .countdown {
       width: 100%;
@@ -44,45 +39,36 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #000; /* Fundo totalmente preto */
+      background: #000;
       position: relative;
-      overflow: hidden;
-    }
-
-    .countdown::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle at 70% 30%, rgba(255, 0, 0, 0.1), transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.8;
     }
 
     .timer-line {
-      font-size: 6em;
+      font-size: 3em;
       display: flex;
       align-items: baseline;
-      gap: 1.2em;
+      gap: 0.4em;
       position: relative;
       z-index: 1;
       color: #ff2d2d;
-      text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-      padding: 0 40px;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+      padding: 0 25px;
+    }
+
+    .timer-line > div {
+      display: flex;
+      align-items: baseline;
+      white-space: nowrap;
     }
 
     .timer-line span {
-      font-size: 0.35em;
+      font-size: 0.4em;
       color: #ff6b6b;
       text-shadow: none;
-      margin-left: 8px;
-      letter-spacing: 1px;
+      margin-left: 0.2em;
+      padding-bottom: 0.2em;
     }
 
-    /* Efeito de tela mais suave */
     .screen-effect {
       position: absolute;
       top: 0;
@@ -96,15 +82,14 @@
       z-index: 2;
     }
 
-    /* Borda interna suavizada */
     .inner-border {
       position: absolute;
-      top: 8px;
-      left: 8px;
-      right: 8px;
-      bottom: 8px;
+      top: 5px;
+      left: 5px;
+      right: 5px;
+      bottom: 5px;
       border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 52px;
+      border-radius: 35px;
       pointer-events: none;
       z-index: 3;
     }
@@ -114,13 +99,46 @@
   <div class="iphone-horizontal">
     <div class="countdown">
       <div class="timer-line">
-        <div>4<span>YRS</span></div>
-        <div>101<span>DAYS</span></div>
-        <div>23:37:40</div>
+        <div id="years">4<span>YRS</span></div>
+        <div id="days">101<span>DAYS</span></div>
+        <div id="time">23:37:40</div>
       </div>
       <div class="screen-effect"></div>
       <div class="inner-border"></div>
     </div>
   </div>
+
+  <script>
+    // Data alvo: 1 de Janeiro de 2025 (exemplo)
+    const targetDate = new Date('2029-07-18T00:00:00');
+    
+    function updateCountdown() {
+      const now = new Date();
+      const diff = targetDate - now;
+      
+      // Cálculos do tempo restante
+      const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
+      const days = Math.floor((diff % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      // Atualiza a exibição
+      document.getElementById('years').innerHTML = `${years}<span>YRS</span>`;
+      document.getElementById('days').innerHTML = `${days}<span>DAYS</span>`;
+      document.getElementById('time').textContent = 
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      // Verifica se o countdown terminou
+      if (diff <= 0) {
+        clearInterval(timer);
+        document.querySelector('.timer-line').innerHTML = '<div>CLIMATE DEADLINE REACHED</div>';
+      }
+    }
+    
+    // Atualiza a cada segundo
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+  </script>
 </body>
 </html>
