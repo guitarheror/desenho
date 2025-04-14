@@ -3,43 +3,123 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Climate Countdown</title>
+  <title>Climate Countdown iPhone Style</title>
   <style>
+    @font-face {
+      font-family: 'Digital-7';
+      src: url('https://fonts.cdnfonts.com/s/15034/Digital7-1YRx.ttf') format('truetype');
+    }
+
     body {
       margin: 0;
       padding: 0;
-      background: black;
-      font-family: 'Courier New', monospace;
+      background: #000;
+      font-family: 'Digital-7', monospace;
       color: #fff;
       height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
+
+    .iphone-horizontal {
+      width: 800px;
+      height: 400px;
+      background: #000;
+      border-radius: 60px;
+      border: 2px solid #333; /* Borda mais fina e escura */
+      position: relative;
+      box-shadow: 0 0 40px rgba(255, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    /* Removido o botão lateral */
+    
+    /* Removido o notch da câmera */
+
     .countdown {
-      background-color: black;
-      border: 4px solid red;
-      padding: 2em 4em;
-      color: red;
-      font-weight: bold;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000; /* Fundo totalmente preto */
+      position: relative;
+      overflow: hidden;
     }
+
+    .countdown::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 70% 30%, rgba(255, 0, 0, 0.1), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.8;
+    }
+
     .timer-line {
-      font-size: 5em;
+      font-size: 6em;
       display: flex;
       align-items: baseline;
-      gap: 1em;
+      gap: 1.2em;
+      position: relative;
+      z-index: 1;
+      color: #ff2d2d;
+      text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+      padding: 0 40px;
     }
+
     .timer-line span {
-      font-size: 0.5em;
+      font-size: 0.35em;
+      color: #ff6b6b;
+      text-shadow: none;
+      margin-left: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* Efeito de tela mais suave */
+    .screen-effect {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+          linear-gradient(rgba(0, 0, 0, 0.3) 50%, transparent 50%),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0) 20%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Borda interna suavizada */
+    .inner-border {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 52px;
+      pointer-events: none;
+      z-index: 3;
     }
   </style>
 </head>
 <body>
-  <div class="countdown">
-    <div class="timer-line">
-      <div>4<span>YRS</span></div>
-      <div>101<span>DAYS</span></div>
-      <div>23:37:40</div>
+  <div class="iphone-horizontal">
+    <div class="countdown">
+      <div class="timer-line">
+        <div>4<span>YRS</span></div>
+        <div>101<span>DAYS</span></div>
+        <div>23:37:40</div>
+      </div>
+      <div class="screen-effect"></div>
+      <div class="inner-border"></div>
     </div>
   </div>
 </body>
