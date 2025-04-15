@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Climate Countdown Timer</title>
+  <title>Climate Countdown</title>
+  <link href="https://fonts.cdnfonts.com/css/digital-dismay" rel="stylesheet">
   <style>
     @font-face {
       font-family: 'Digital-7';
@@ -24,10 +25,10 @@
     }
 
     .iphone-horizontal {
-      width: 500px;
-      height: 250px;
+      width: 450px;  /* Largura reduzida */
+      height: 200px; /* Altura reduzida */
       background: #000;
-      border-radius: 40px;
+      border-radius: 30px; /* Bordas mais curvas */
       border: 1.5px solid #333;
       position: relative;
       overflow: hidden;
@@ -44,7 +45,7 @@
     }
 
     .timer-line {
-      font-size: 3em;
+      font-size: 2.8em; /* Tamanho ajustado */
       display: flex;
       align-items: baseline;
       gap: 0.4em;
@@ -52,21 +53,26 @@
       z-index: 1;
       color: #ff2d2d;
       text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
-      padding: 0 25px;
+      padding: 0 20px;
     }
 
-    .timer-line > div {
-      display: flex;
-      align-items: baseline;
-      white-space: nowrap;
+    /* Aplica Digital Dismay apenas nos números */
+    .timer-line > div:first-child,
+    .timer-line > div:nth-child(2),
+    .timer-line > div:last-child {
+      font-family: 'Digital Dismay', sans-serif;
+      letter-spacing: 1px;
     }
 
+    /* Mantém Digital-7 nas letras */
     .timer-line span {
+      font-family: 'Digital-7', monospace;
       font-size: 0.4em;
       color: #ff6b6b;
       text-shadow: none;
       margin-left: 0.2em;
       padding-bottom: 0.2em;
+      letter-spacing: 0;
     }
 
     .screen-effect {
@@ -84,12 +90,12 @@
 
     .inner-border {
       position: absolute;
-      top: 5px;
-      left: 5px;
-      right: 5px;
-      bottom: 5px;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
       border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 35px;
+      border-radius: 26px;
       pointer-events: none;
       z-index: 3;
     }
@@ -99,46 +105,13 @@
   <div class="iphone-horizontal">
     <div class="countdown">
       <div class="timer-line">
-        <div id="years">4<span>YRS</span></div>
-        <div id="days">101<span>DAYS</span></div>
-        <div id="time">23:37:40</div>
+        <div>4<span>YRS</span></div>
+        <div>101<span>DAYS</span></div>
+        <div>23:37:40</div>
       </div>
       <div class="screen-effect"></div>
       <div class="inner-border"></div>
     </div>
   </div>
-
-  <script>
-    // Data alvo: 1 de Janeiro de 2025 (exemplo)
-    const targetDate = new Date('2029-07-22T00:00:00');
-    
-    function updateCountdown() {
-      const now = new Date();
-      const diff = targetDate - now;
-      
-      // Cálculos do tempo restante
-      const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
-      const days = Math.floor((diff % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      
-      // Atualiza a exibição
-      document.getElementById('years').innerHTML = `${years}<span>YRS</span>`;
-      document.getElementById('days').innerHTML = `${days}<span>DAYS</span>`;
-      document.getElementById('time').textContent = 
-        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      
-      // Verifica se o countdown terminou
-      if (diff <= 0) {
-        clearInterval(timer);
-        document.querySelector('.timer-line').innerHTML = '<div>CLIMATE DEADLINE REACHED</div>';
-      }
-    }
-    
-    // Atualiza a cada segundo
-    updateCountdown();
-    const timer = setInterval(updateCountdown, 1000);
-  </script>
 </body>
 </html>
