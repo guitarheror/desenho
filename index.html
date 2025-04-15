@@ -28,7 +28,7 @@
       width: 450px;
       height: 200px;
       background: #000;
-      border-radius: 30px;
+      border-radius: 30px 30px 15px 15px; /* Topo mais redondo, base mais quadrada */
       position: relative;
       overflow: hidden;
       box-shadow: 
@@ -51,15 +51,15 @@
     }
 
     .timer-line {
-      font-size: 3.5em; /* Aumentado para o máximo possível */
+      font-size: 3.5em;
       display: flex;
       align-items: baseline;
-      gap: 0.3em; /* Reduzido para caber o texto maior */
+      gap: 0.3em;
       position: relative;
       z-index: 1;
       color: #ff2d2d;
       text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
-      padding: 0 15px; /* Ajustado para caber */
+      padding: 0 15px;
       white-space: nowrap;
     }
 
@@ -72,7 +72,7 @@
 
     .timer-line span {
       font-family: 'Digital-7', monospace;
-      font-size: 0.35em; /* Ajustado proporcionalmente */
+      font-size: 0.35em;
       color: #ff6b6b;
       text-shadow: none;
       margin-left: 0.2em;
@@ -100,7 +100,7 @@
       right: 4px;
       bottom: 4px;
       border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 26px;
+      border-radius: 26px 26px 12px 12px; /* Combinando com o formato externo */
       pointer-events: none;
       z-index: 3;
     }
@@ -121,7 +121,7 @@
 
   <script>
     // Data alvo: 1 de Janeiro de 2028 (ajuste conforme necessário)
-    const targetDate = new Date('July 22, 2029 00:00:00').getTime();
+    const targetDate = new Date('January 1, 2028 00:00:00').getTime();
 
     function updateCountdown() {
       const now = new Date().getTime();
