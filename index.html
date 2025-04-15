@@ -25,13 +25,19 @@
     }
 
     .iphone-horizontal {
-      width: 450px;  /* Largura reduzida */
-      height: 200px; /* Altura reduzida */
+      width: 450px;
+      height: 200px;
       background: #000;
-      border-radius: 30px; /* Bordas mais curvas */
-      border: 1.5px solid #333;
+      border-radius: 30px;
       position: relative;
       overflow: hidden;
+      box-shadow: 
+        0 -5px 15px rgba(255, 255, 255, 0.1),
+        0 1px 1px rgba(0, 0, 0, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      border-left: 1px solid rgba(0, 0, 0, 0.8);
+      border-right: 1px solid rgba(0, 0, 0, 0.8);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.8);
     }
 
     .countdown {
@@ -45,18 +51,18 @@
     }
 
     .timer-line {
-      font-size: 2.8em; /* Tamanho ajustado */
+      font-size: 3.5em; /* Aumentado para o máximo possível */
       display: flex;
       align-items: baseline;
-      gap: 0.4em;
+      gap: 0.3em; /* Reduzido para caber o texto maior */
       position: relative;
       z-index: 1;
       color: #ff2d2d;
       text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
-      padding: 0 20px;
+      padding: 0 15px; /* Ajustado para caber */
+      white-space: nowrap;
     }
 
-    /* Aplica Digital Dismay apenas nos números */
     .timer-line > div:first-child,
     .timer-line > div:nth-child(2),
     .timer-line > div:last-child {
@@ -64,10 +70,9 @@
       letter-spacing: 1px;
     }
 
-    /* Mantém Digital-7 nas letras */
     .timer-line span {
       font-family: 'Digital-7', monospace;
-      font-size: 0.4em;
+      font-size: 0.35em; /* Ajustado proporcionalmente */
       color: #ff6b6b;
       text-shadow: none;
       margin-left: 0.2em;
@@ -104,14 +109,57 @@
 <body>
   <div class="iphone-horizontal">
     <div class="countdown">
-      <div class="timer-line">
-        <div>4<span>YRS</span></div>
-        <div>101<span>DAYS</span></div>
-        <div>23:37:40</div>
+      <div class="timer-line" id="countdown-timer">
+        <div id="years">4<span>YRS</span></div>
+        <div id="days">101<span>DAYS</span></div>
+        <div id="time">23:37:40</div>
       </div>
       <div class="screen-effect"></div>
       <div class="inner-border"></div>
     </div>
   </div>
+
+  <script>
+    // Data alvo: 1 de Janeiro de 2028 (ajuste conforme necessário)
+    const targetDate = new Date('January 1, 2028 00:00:00').getTime();
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      // Cálculos do tempo
+      const years = Math.floor(distance / (1000 * 60 * 60 * 24 * 365));
+      const days = Math.floor((distance % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      // Atualiza o display
+      document.getElementById('years').innerHTML = years + '<span>YRS</span>';
+      document.getElementById('days').innerHTML = days + '<span>DAYS</span>';
+      document.getElementById('time').innerHTML = 
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+      // Efeito de piscar quando faltar menos de 1 minuto
+      if (distance < 60000) {
+        document.getElementById('countdown-timer').style.animation = 'blink 1s infinite';
+      }
+    }
+
+    // Atualiza a cada segundo
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // Adiciona animação de piscar
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </body>
 </html>
