@@ -28,16 +28,10 @@
       width: 450px;
       height: 200px;
       background: #000;
-      border-radius: 30px 30px 15px 15px; /* Topo mais redondo, base mais quadrada */
+      border-radius: 15px 15px 5px 5px;
       position: relative;
       overflow: hidden;
-      box-shadow: 
-        0 -5px 15px rgba(255, 255, 255, 0.1),
-        0 1px 1px rgba(0, 0, 0, 0.5);
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-      border-left: 1px solid rgba(0, 0, 0, 0.8);
-      border-right: 1px solid rgba(0, 0, 0, 0.8);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.8);
+      border: 1px solid #333;
     }
 
     .countdown {
@@ -100,9 +94,19 @@
       right: 4px;
       bottom: 4px;
       border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 26px 26px 12px 12px; /* Combinando com o formato externo */
+      border-radius: 12px 12px 3px 3px;
       pointer-events: none;
       z-index: 3;
+    }
+
+    .blink {
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
     }
   </style>
 </head>
@@ -110,9 +114,9 @@
   <div class="iphone-horizontal">
     <div class="countdown">
       <div class="timer-line" id="countdown-timer">
-        <div id="years">4<span>YRS</span></div>
-        <div id="days">101<span>DAYS</span></div>
-        <div id="time">23:37:40</div>
+        <div id="years">0<span>YRS</span></div>
+        <div id="days">0<span>DAYS</span></div>
+        <div id="time">00:00:00</div>
       </div>
       <div class="screen-effect"></div>
       <div class="inner-border"></div>
@@ -120,12 +124,25 @@
   </div>
 
   <script>
-    // Data alvo: 1 de Janeiro de 2028 (ajuste conforme necessário)
-    const targetDate = new Date('April 16, 2025 13:17:00').getTime();
+    const targetDate = new Date('April 23, 2025 13:38:00').getTime();
+    const timerElement = document.getElementById('countdown-timer');
+    let countdownActive = true;
 
     function updateCountdown() {
+      if (!countdownActive) return;
+
       const now = new Date().getTime();
       const distance = targetDate - now;
+
+      if (distance <= 0) {
+        // Chegou a zero - para o contador
+        document.getElementById('years').innerHTML = '0<span>YRS</span>';
+        document.getElementById('days').innerHTML = '0<span>DAYS</span>';
+        document.getElementById('time').innerHTML = '00:00:00';
+        timerElement.classList.add('blink');
+        countdownActive = false;
+        return;
+      }
 
       // Cálculos do tempo
       const years = Math.floor(distance / (1000 * 60 * 60 * 24 * 365));
@@ -142,24 +159,20 @@
 
       // Efeito de piscar quando faltar menos de 1 minuto
       if (distance < 60000) {
-        document.getElementById('countdown-timer').style.animation = 'blink 1s infinite';
+        timerElement.classList.add('blink');
+      } else {
+        timerElement.classList.remove('blink');
       }
     }
 
     // Atualiza a cada segundo
     updateCountdown();
-    setInterval(updateCountdown, 1000);
+    const countdownInterval = setInterval(updateCountdown, 1000);
 
-    // Adiciona animação de piscar
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes blink {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
-      }
-    `;
-    document.head.appendChild(style);
+    // Para o intervalo quando chegar a zero
+    function stopCountdown() {
+      clearInterval(countdownInterval);
+    }
   </script>
 </body>
 </html>
